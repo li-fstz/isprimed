@@ -105,7 +105,7 @@ object IsPrime {
                 case "click" => pm.data.key.get match {
                     case "today" => {
                         val c = java.util.Calendar.getInstance 
-                        val today = c.get(1) * 10000 + c.get(2) * 100 + c.get(5)
+                        val today = c.get(1) * 10000 + (c.get(2) + 1) * 100 + c.get(5)
                         val facList = factorize(today).reverse
                         if (facList.length == 1) {
                             ret (s"今天是一个质数，\n$today 是一个质数")
