@@ -68,7 +68,7 @@ object IsPrime {
                         ret ("你的下一个质数生日不存在")
                     } else {
                         val c = java.util.Calendar.getInstance 
-                        val dy = (if ((c.get(2) + 1) < month || ((c.get(2) + 1) == month && c.get(5) < day)) 1 else 0) to 10000
+                        val dy = (if (month < (c.get(2) + 1) || ((c.get(2) + 1) == month && day < c.get(5))) 1 else 0) to 10000
                         val bd = c.get(1) * 10000 + month * 100 + day
                         val pbd = dy.find {
                             y => 
