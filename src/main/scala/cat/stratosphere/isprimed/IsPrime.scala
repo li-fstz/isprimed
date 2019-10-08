@@ -52,6 +52,24 @@ object IsPrime {
             }
             foo(x)
         }
+        def format (factors: List[BigInt]): String = {
+            val facList = factors.reverse
+            facList.head.toString + facList.tail.map (" × " + _).mkString
+        }
+        def format2 (factors: List[BigInt]): String = {
+            def zip (factors: List[BigInt]): List[(BigInt, Int)] = {
+                @tailrec
+                def foo (f: List[BigInt], z: List[(BigInt, Int)] = Nil): List[(BigInt, Int)] = f match {
+                    case Nil => z
+                    case x::_ =>
+                        if (z != Nil && z.head._1 == x) foo (f.tail, (z.head._1, z.head._2 + 1)::z.tail)
+                        else foo (f.tail, (x, 1)::z)
+                }
+                foo (factors)
+            }
+            val facList = zip (factors).map(i => if (i._2 == 1) i._1.toString else s"""${i._1}^${i._2}""")
+            facList.head + facList.tail.map (" × " + _).mkString
+        }
         def makeReply (pm: PostMsg) (str: String): Some[Json] = Some(ReplyMsg(pm.sender_id, pm.receiver_id, str).asJson)
         def text (pm: PostMsg): Option[Json] = {
             val date = """(\d{1,2}) *月 *(\d{1,2}) *日""".r
@@ -81,11 +99,11 @@ object IsPrime {
                     if (n.length <= 16) {
                         val num = BigInt(n)
                         if (num > 1 && num.toDouble <= 1e15) {
-                            val facList = factorize(num).reverse
-                            if (facList.length == 1) {
+                            val factors = factorize(num)
+                            if (factors.length == 1) {
                                 ret (s"$num 是一个质数")
                             } else {
-                                ret (s"$num 不是一个质数\n${num.toString + " = " + facList.head + facList.tail.map (" × " + _).mkString}")
+                                ret (s"$num 不是一个质数\n$num = ${format (factors)}")
                             }
                         } else {
                             ret ("ERROR: Num Limit Exceeded.\nNOTICE: 2 ≤ x ≤ 1e15.")
@@ -95,6 +113,7 @@ object IsPrime {
                     }
                 }
                 case "li-fstz" => None
+                case "version" => ret ("isprimed version 1.0.1")
                 case _ => None
             }
         }
@@ -106,11 +125,11 @@ object IsPrime {
                     case "today" => {
                         val c = java.util.Calendar.getInstance 
                         val today = c.get(1) * 10000 + (c.get(2) + 1) * 100 + c.get(5)
-                        val facList = factorize(today).reverse
-                        if (facList.length == 1) {
+                        val factors = factorize(today)
+                        if (factors.length == 1) {
                             ret (s"今天是一个质数，\n$today 是一个质数")
                         } else {
-                            ret (s"今天不是一个质数\n${today.toString + " = " + facList.head + facList.tail.map (" × " + _).mkString}")
+                            ret (s"今天不是一个质数\n$today = ${format (factors)}")
                         }
                     }
                     case "isPrime" => ret ("你可以发给我一个数 x\n(2 ≤ x ≤ 10^15)，\n我会帮你判断 x 是不是一个质数")

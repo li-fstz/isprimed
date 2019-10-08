@@ -7,7 +7,6 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
-import fs2.Stream
 import scala.concurrent.ExecutionContext.global
 import scala.io.StdIn
 
@@ -23,8 +22,8 @@ object IsprimedServer {
       // Can also be done via a Router if you
       // want to extract a segments not checked
       // in the underlying routes.
-      appSecret = StdIn.readLine("input your appSecret:")
-      isPrimeAlg = (IsPrime.impl[F](appSecret))
+      appSecret = StdIn.readLine("input your appSecret: ")
+      isPrimeAlg = IsPrime.impl[F](appSecret)
       httpApp = (
         IsprimedRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
         IsprimedRoutes.jokeRoutes[F](jokeAlg) <+>
