@@ -70,7 +70,7 @@ object IsPrime {
             //⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹
             def toTop (num: Int): String = {
                 val arr = Array ("⁰", "¹", "²" ,"³" ,"⁴" ,"⁵" ,"⁶" ,"⁷" ,"⁸" ,"⁹")
-                num.toString.foldLeft("")((s: String, ch: Char) => s + arr(ch.toInt))
+                num.toString.foldLeft("")((s: String, ch: Char) => s + arr(ch.toInt - '0'.toInt))
             }
             val facList = zip (factors).map(i => if (i._2 == 1) i._1.toString else s"""${i._1.toString + toTop(i._2)}""")
             facList.head + facList.tail.map (" × " + _).mkString
