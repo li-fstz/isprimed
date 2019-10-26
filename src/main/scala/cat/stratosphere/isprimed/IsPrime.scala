@@ -134,7 +134,7 @@ object IsPrime {
                         if (factors.length == 1) {
                             ret (s"今天是一个质数，\n$today 是一个质数")
                         } else {
-                            ret (s"今天不是一个质数\n$today = ${format (factors)}")
+                            ret (s"今天不是一个质数，\n$today = ${format (factors)}")
                         }
                     }
                     case "isPrime" => ret ("你可以发给我一个数 x\n(2 ≤ x ≤ 10^15)，\n我会帮你判断 x 是不是一个质数")
