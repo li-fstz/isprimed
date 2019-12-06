@@ -117,8 +117,10 @@ object IsPrime {
                         ret ("ERROR: Num Limit Exceeded.\nNOTICE: 2 ≤ x ≤ 1e15.")
                     }
                 }
+                case str if str.indexOf("生日") != -1 => 
+                    ret ("是想问你的下一个质数生日吗？\n你可以发给我你的生日，\n如：1 月 1 日")
                 case "li-fstz" => None
-                case "version" => ret ("isprimed version 1.0.1")
+                case "version" => ret ("isprimed version 1.1.0")
                 case _ => None
             }
         }
