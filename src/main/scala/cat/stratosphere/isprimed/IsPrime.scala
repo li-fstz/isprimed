@@ -76,14 +76,25 @@ object IsPrime {
             facList.head + facList.tail.map (" × " + _).mkString
         }
         def makeReply (pm: PostMsg) (str: String): Some[Json] = Some(ReplyMsg(pm.sender_id, pm.receiver_id, str).asJson)
+        object DataUnapply {
+            def unapply (str: String): Option[(Int, Int)] = {
+                val date = """(\d{1,2}) *(月|\.) *(\d{1,2})""".r
+                date.findFirstMatchIn(str) match {
+                    case Some(value) => Some((value.group(1).toInt, value.group(3).toInt))
+                    case None => None
+                }
+            }
+        }
+        object NumberUnapply {
+            def unapply (str: String): Option[String] = {
+                val number = """(\d+)""".r
+                number.findFirstIn(str)
+            }
+        }
         def text (pm: PostMsg): Option[Json] = {
-            val date = """(\d{1,2}) *月 *(\d{1,2}) *日""".r
-            val number = """^(\d+)$""".r
             def ret = makeReply (pm) (_)
             pm.text match {
-                case date (m, d) => {
-                    val month = m.toInt
-                    val day = d.toInt
+                case DataUnapply (month, day) => {
                     val days = Array (0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
                     if (month < 1 || month > 12 || day < 1 || day > days(month)) {
                         ret ("ERROR: Illegality Birthday.")
@@ -100,7 +111,7 @@ object IsPrime {
                         ret (s"你的下一个质数生日是\n${pbd + c.get(1)} 年 $month 月 $day 日")
                     }
                 }
-                case number (n) => {
+                case NumberUnapply (n) => {
                     if (n.length <= 16) {
                         val num = BigInt(n)
                         if (num > 1 && num.toDouble <= 1e15) {
@@ -120,7 +131,7 @@ object IsPrime {
                 case str if str.indexOf("生日") != -1 => 
                     ret ("是想问你的下一个质数生日吗？\n你可以发给我你的生日，\n如：1 月 1 日")
                 case "li-fstz" => None
-                case "version" => ret ("isprimed version 1.1.0")
+                case "version" => ret ("isprimed version 1.1.1")
                 case _ => None
             }
         }
