@@ -43,23 +43,23 @@ object IsPrime {
                         "data":${textData(rm.text)}}"""
             }
         }
-        def factorize (x: BigInt): List[BigInt] = {
+        def factorize (x: Long): List[Long] = {
             @tailrec
-            def foo (x: BigInt, a: BigInt = 2, list: List[BigInt] = Nil): List[BigInt] = a * a > x match {
+            def foo (x: Long, a: Long = 2, list: List[Long] = Nil): List[Long] = a * a > x match {
                 case false if x % a == 0 => foo (x / a, a, a :: list)
                 case false => foo (x, a + 1, list)
                 case true => x :: list
             }
             foo(x)
         }
-        def format (factors: List[BigInt]): String = {
+        def format (factors: List[Long]): String = {
             val facList = factors.reverse
             facList.head.toString + facList.tail.map (" × " + _).mkString
         }
-        def format2 (factors: List[BigInt]): String = {
-            def zip (factors: List[BigInt]): List[(BigInt, Int)] = {
+        def format2 (factors: List[Long]): String = {
+            def zip (factors: List[Long]): List[(Long, Int)] = {
                 @tailrec
-                def foo (f: List[BigInt], z: List[(BigInt, Int)] = Nil): List[(BigInt, Int)] = f match {
+                def foo (f: List[Long], z: List[(Long, Int)] = Nil): List[(Long, Int)] = f match {
                     case Nil => z
                     case x::_ =>
                         if (z != Nil && z.head._1 == x) foo (f.tail, (z.head._1, z.head._2 + 1)::z.tail)
@@ -113,7 +113,7 @@ object IsPrime {
                 }
                 case NumberUnapply (n) => {
                     if (n.length <= 16) {
-                        val num = BigInt(n)
+                        val num = Long(n)
                         if (num > 1 && num.toDouble <= 1e15) {
                             val factors = factorize(num)
                             if (factors.length == 1) {

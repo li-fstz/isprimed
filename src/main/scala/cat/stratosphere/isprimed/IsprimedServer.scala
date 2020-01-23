@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.global
 import scala.io.StdIn
 
 object IsprimedServer {
-
+  
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F], C: ContextShift[F]): Stream[F, Nothing] = {
     for {
       client <- BlazeClientBuilder[F](global).stream
