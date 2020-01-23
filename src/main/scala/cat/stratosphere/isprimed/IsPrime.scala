@@ -113,7 +113,7 @@ object IsPrime {
                 }
                 case NumberUnapply (n) => {
                     if (n.length <= 16) {
-                        val num = Long(n)
+                        val num = n.toLong
                         if (num > 1 && num.toDouble <= 1e15) {
                             val factors = factorize(num)
                             if (factors.length == 1) {
