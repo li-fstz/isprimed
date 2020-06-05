@@ -5,29 +5,12 @@ import cats.implicits._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
-import org.http4s._
-import org.http4s.circe._
-import org.http4s.dsl.io._
-import org.http4s.implicits._
 
-import io.circe._
-import io.circe.generic.auto._
-import io.circe.syntax._
+import org.http4s.circe._
+
+import io.circe._, io.circe.generic.auto._
 
 object IsprimedRoutes {
-
-  def jokeRoutes[F[_]: Sync](J: Jokes[F]): HttpRoutes[F] = {
-    val dsl = new Http4sDsl[F]{}
-    import dsl._
-    HttpRoutes.of[F] {
-      case GET -> Root / "joke" =>
-        for {
-          joke <- J.get
-          resp <- Ok(joke)
-        } yield resp
-    }
-  }
-
   def helloWorldRoutes[F[_]: Sync](H: HelloWorld[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F]{}
     import dsl._
@@ -57,17 +40,11 @@ object IsprimedRoutes {
           for {
             pm <- req.as[IsPrime.PostMsg]
             resp <- pm.`type` match {
-              case "text" => ISP.text(pm) match {
-                case Some (json) => Ok(json)
-                case None => Ok("")
-              }
-              case "event" => ISP.event(pm) match {
-                case Some (json) => Ok (json)
-                case None => Ok("")
-              }
+              case "text" => Ok (ISP.text(pm).getOrElse(Json.Null))
+              case "event" => Ok (ISP.event(pm).getOrElse(Json.Null))
             }
           } yield resp
-      case GET -> Root / "isPrime" :? nonceQPM (nonce) 
+      case GET -> Root / "isPrime"  :? nonceQPM (nonce) 
                                     +& signatureQPM(signature) 
                                     +& timestampQPM(timestamp) 
                                     +& echostrOQPM(echostr) 
