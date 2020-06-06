@@ -2,6 +2,7 @@ package cat.stratosphere.isprimed
 
 import io.circe._, io.circe.generic.auto._, io.circe.syntax._
 import cats.effect.Sync
+import java.util.Calendar
 trait IsPrime[F[_]] {
     def text (pm: IsPrime.PostMsg): Option[Json]
     def event (pm: IsPrime.PostMsg): Option[Json]
@@ -38,7 +39,6 @@ object IsPrime extends PrimeNumber {
             } else if (day % 2 == 0 || day % 5 == 0) {
                 "你的下一个质数生日不存在"
             } else {
-                import java.util.Calendar
                 val c = Calendar.getInstance 
                 val dy = (if (month < (c.get(Calendar.MONTH) + 1) || ((c.get(Calendar.MONTH) + 1) == month && day < c.get(Calendar.DATE))) 1 else 0) to 10000
                 val bd = c.get(Calendar.YEAR) * 10000 + month * 100 + day
@@ -72,41 +72,51 @@ object IsPrime extends PrimeNumber {
             }
         }
     }
+    object NextPrimeTimeUnapply {
+        def unapply (str: String): Option[String] = {
+            if (str.indexOf("下一个质数时间") != -1 || str == "nextPrimeTime") 
+                Some(replayString(Calendar.getInstance()))
+            else
+                None
+        }
+        def replayString (c: Calendar) = {
+            val time = (c.get(Calendar.YEAR) * 10000L + (c.get(Calendar.MARCH) + 1) * 100 + c.get(Calendar.DATE)) * 10000 + c.get(Calendar.HOUR_OF_DAY) * 100 + c.get(Calendar.MINUTE)
+            primeTime(time) match {
+                case None => "今天已经没有质数时间了"
+                //2020.06.05 20:51
+                case Some (value) => {
+                    val y = value / 100000000
+                    val m = value % 100000000 / 1000000
+                    val d = value % 1000000 / 10000
+                    val h = value % 10000 / 100
+                    val mm = value % 100
+                    "下一个质数时间为 " + String.format("%d.%02d.%02d %02d:%02d", y, m, d, h, mm)
+                }
+            }
+        }
+    }
     def impl[F[_]: Sync](appSecret: String): IsPrime[F] = new IsPrime[F] {
         def checkSignature (nonce: String, signature: String, timestamp: String): Boolean = {
             val arr = Array (nonce, appSecret, timestamp)
             val md = java.security.MessageDigest.getInstance("SHA-1") 
             md.digest(arr.sorted.mkString.getBytes).map("%02x".format(_)).mkString == signature
         }
-        import java.net.URLEncoder
         def makeReply (pm: PostMsg) (str: String): Some[Json] = {
+            import java.net.URLEncoder
             Some(ReplyMsg(pm.receiver_id, pm.sender_id, URLEncoder.encode(Text(str).asJson.noSpaces, "UTF8")).asJson)
         }
         def text (pm: PostMsg): Option[Json] = {
             def ret = makeReply (pm) (_)
-            
             pm.text match {
                 case DataUnapply (s) => ret(s)
                 case NumberUnapply (s) => ret(s)
+                case NextPrimeTimeUnapply (s) => ret(s)
                 case str if str.indexOf("生日") != -1 => 
-                    ret ("是想问你的下一个质数生日吗？\n你可以发给我你的生日，\n如：1 月 1 日")
-                case "下一个质数时间" => {
-                    import java.util.Calendar
-                    val c = Calendar.getInstance
-                    val time = (c.get(Calendar.YEAR) * 10000L + (c.get(Calendar.MARCH) + 1) * 100 + c.get(Calendar.DATE)) * 10000 + c.get(Calendar.HOUR_OF_DAY) * 100 + c.get(Calendar.MINUTE)
-                    primeTime(time) match {
-                        case None => ret ("今天已经没有质数时间了")
-                        //2020.06.05 20:51
-                        case Some (value) => {
-                            val y = value / 100000000
-                            val m = value % 100000000 / 1000000
-                            val d = value % 1000000 / 10000
-                            val h = value % 10000 / 100
-                            val mm = value % 100
-                            ret("下一个质数时间为 " + String.format("%d.%02d.%02d %02d:%02d", y, m, d, h, mm))
-                        }
-                    }
-                }
+                    ret (
+                        """|是想问你的下一个质数生日吗？
+                           |你可以发给我你的生日，
+                           |如：1 月 1 日""".stripMargin
+                    )
                 case "li-fstz" => ret ("Yes!")
                 case "version" => ret ("isprimed version 1.2.0")
                 case _ => None
@@ -115,10 +125,21 @@ object IsPrime extends PrimeNumber {
         def event (pm: PostMsg): Option[Json] = {
             def ret = makeReply (pm) (_)
             pm.data.subtype.get match {
-                case "follow" => ret ("这里是一个质数 bot 的微博，\n你可以发给我一个数 x\n(2 ≤ x ≤ 10^15)，\n我会帮你判断 x 是不是一个质数\n你也可以发给我你的生日，\n如：1 月 1 日，\n我会告诉你你的下一个质数生日\nP.S. 如果没有收到回复的话可以尝试再次发送或者给我留言")
+                case "follow" => ret (
+                    """|这里是一个质数 bot 的微博。
+                       |你可以发给我一个数 x
+                       |(2 ≤ x ≤ 10^15)，
+                       |我会帮你判断 x 是不是一个质数；
+                       |你也可以发给我你的生日，
+                       |如：1 月 1 日，
+                       |我会告诉你你的下一个质数生日；
+                       |你也可以发给我“下一个质数时间”，
+                       |我会告诉你今天的下一个质数时间。
+                       |
+                       |P.S. 如果没有收到回复的话可以尝试再次发送或者给我留言""".stripMargin
+                )
                 case "click" => pm.data.key.get match {
                     case "today" => {
-                        import java.util.Calendar
                         val c = Calendar.getInstance 
                         val today = c.get(Calendar.YEAR) * 10000 + (c.get(Calendar.MARCH) + 1) * 100 + c.get(Calendar.DATE)
                         val factors = factorize(today)
@@ -128,8 +149,17 @@ object IsPrime extends PrimeNumber {
                             ret (s"今天不是一个质数，\n$today = ${format2 (factors)}")
                         }
                     }
-                    case "isPrime" => ret ("你可以发给我一个数 x\n(2 ≤ x ≤ 10^15)，\n我会帮你判断 x 是不是一个质数")
-                    case "birthday" => ret ("你可以发给我你的生日，\n如：1 月 1 日，\n我会告诉你你的下一个质数生日")
+                    case "isPrime" => ret (
+                        """|你可以发给我一个数 x
+                           |(2 ≤ x ≤ 10^15)，
+                           |我会帮你判断 x 是不是一个质数""".stripMargin
+                    )
+                    case "birthday" => ret (
+                        """|你可以发给我你的生日，
+                           |如：1 月 1 日，
+                           |我会告诉你你的下一个质数生日""".stripMargin
+                    )
+                    case NextPrimeTimeUnapply (s) => ret(s)
                 }
             }
         }    
